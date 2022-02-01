@@ -5,6 +5,9 @@ inputs:
   image:
     description: short image name without repo/owner and tag, e.g. platformstorageapi
     required: true
+  helm-charts:
+    description: A space-separated list of helm charts
+    required: true
   artifact:
     description: The artifact name uploaded by upload-image-action
     required: false
@@ -109,24 +112,29 @@ runs:
       docker push ghcr.io/neuro-inc/${{ inputs.image}}:${{ steps.meta.outputs.version }}
     shell: bash
   - name: Create chart
-    run: make helm_create_chart
+    run: |
+      for HELM_CHART in ${{ inputs.helm_charts }}; do
+        VALUES=$$(cat charts/${HELM_CHART}/values.yaml | envsubst)
+        echo "$$VALUES" > charts/${HELM_CHART}/values.yaml
+        CHART=$$(cat charts/${HELM_CHART}/Chart.yaml | envsubst)
+        echo "$$CHART" > charts/${HELM_CHART}/Chart.yaml
+      done
     env:
-      IMAGE_REGISTRY: github
+      IMAGE_REPO: ghcr.io/neuro-inc/${{ inputs.image }}
       IMAGE_TAG: ${{ needs.meta.outputs.version }}
-      GITHUB_OWNER: ${{ github.repository_owner }}
-      HELM_CHART_VERSION: ${{ needs.meta.outputs.version }}
-      HELM_APP_VERSION: ${{ needs.meta.outputs.version }}
+      CHART_VERSION: ${{ needs.meta.outputs.version }}
+      APP_VERSION: ${{ needs.meta.outputs.version }}
     shell: bash
   - name: Release chart
     env:
       HELM_EXPERIMENTAL_OCI: '1'
-      HELM_REPO: ghcr.io/neuro-inc/helm-charts
-      HELM_CHART_VERSION: ${{ needs.meta.outputs.version }}
       CR_TOKEN: ${{ inputs.token }}
     run: |
       echo $CR_TOKEN | helm registry login ghcr.io -u x-access-token --password-stdin
-      helm package charts/platform-registry -u
-      helm push platform-registry-$HELM_CHART_VERSION.tgz oci://$HELM_REPO
+      for HELM_CHART in ${{ inputs.helm_charts }}; do
+        helm package charts/${HELM_CHART} -u
+        helm push ${HELM_CHART}-${{ needs.meta.outputs.version }}.tgz oci://ghcr.io/neuro-inc/helm-charts
+      done
     shell: bash
   - name: GitHub Release
     uses: ncipollo/release-action@v1.9.0
