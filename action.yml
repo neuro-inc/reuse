@@ -1,0 +1,138 @@
+---
+name: Release Service
+description: Release Neu.ro service as ghcr.io Docker image and Helm Chart
+inputs:
+  image:
+    description: short image name without repo/owner and tag, e.g. platformstorageapi
+    required: true
+  artifact:
+    description: The artifact name uploaded by upload-image-action
+    required: false
+    default: image
+  token:
+    description: github token, <secrets.GITHUB_TOKEN>
+    required: true
+  actor:
+    description: github actoe, <github.actor>
+    required: true
+outputs:
+  version:
+    description: Version
+    value: ${{ steps.meta.outputs.version }}
+  skip:
+    description: Skip
+    value: ${{ steps.meta.outputs.skip }}
+  tag:
+    description: Tag
+    value: ${{ steps.meta.outputs.tag }}
+  prerelease:
+    description: Prerelease
+    value: ${{ steps.meta.outputs.prerelease }}
+runs:
+  using: composite
+  steps:
+  - name: Detect metadata
+    id: meta
+    run: |
+      import os
+      import re
+      import sys
+
+      def dump(val):
+        if val:
+          return "true"
+        else:
+          return ""
+
+      ref = os.environ("REF")
+      PRE = "refs/tags/"
+      if not ref.startswith(PRE):
+        print(f"::error:: Ref {ref} doesn't contain a tag")
+        sys.exit(1)
+      else:
+        tag = "ref[PRE:]
+
+      match = re.match(r"^v\d+\.\d+(\.\d+)?(?P<pre>(a|b|rc)\d*)?$", tag)
+      if not match:
+        print(
+          f"::error:: Invalid tag {tag}; ",
+          "The tag should have vYY.MM[.NN][{a|b|rc}N] format ",
+          "where YY is the current year, MM is the current month, "
+          "NN is incremental number, "
+          "every next month resets the number to 0, "
+          "a -- alpha, b -- beta, rc -- release candidate, N -- number.",
+        )
+        sys.exit(1)
+      else:
+        print(f"::set-output name=tag::{tag}")
+        version = tag[1:]
+        print(f"::set-output name=version::{version}")
+        print(f"::set-output name=prerelease::{dump(match.group('pre'))}")
+    shell: python
+  - name: Install Helm
+    uses: azure/setup-helm@v2.0
+    with:
+      version: v3.7.0
+  - name: Purge old artifacts
+    uses: kolpav/purge-artifacts-action@v1
+    with:
+      token: ${{ inputs.token }}
+      expire-in: 30mins
+  - name: Download image artifact
+    uses: actions/download-artifact@v2.1.0
+    with:
+      name: ${{ inputs.artifact }}
+  - name: Login to ghcr.io
+    uses: docker/login-action@v1.12.0
+    with:
+      registry: ghcr.io
+      username: ${{ inputs.actor }}
+      password: ${{ inputs.token }}
+  - name: Load image into docker
+    run: |
+      docker load --input ${{ inputs.image }}.tar
+    shell: bash
+  - name: Tag remote latest image
+    run: |
+      docker tag ${{ inputs.image }}:latest ghcr.io/neuro-inc/${{ inputs.image}}:latest
+    shell: bash
+  - name: Tag remote versioned image
+    run: |
+      docker tag ${{ inputs.image }}:latest ghcr.io/neuro-inc/{image}:${{ steps.meta.outputs.version }}
+    shell: bash
+  - name: Push latest image to ghcr.io
+    run: |
+      docker push ghcr.io/neuro-inc/${{ inputs.image}}:latest
+    shell: bash
+  - name: Push versioned image to ghcr.io
+    run: |
+      docker push ghcr.io/neuro-inc/${{ inputs.image}}:${{ steps.meta.outputs.version }}
+    shell: bash
+  - name: Create chart
+    run: make helm_create_chart
+    env:
+      IMAGE_REGISTRY: github
+      IMAGE_TAG: ${{ needs.meta.outputs.version }}
+      GITHUB_OWNER: ${{ github.repository_owner }}
+      HELM_CHART_VERSION: ${{ needs.meta.outputs.version }}
+      HELM_APP_VERSION: ${{ needs.meta.outputs.version }}
+    shell: bash
+  - name: Release chart
+    env:
+      HELM_EXPERIMENTAL_OCI: '1'
+      HELM_REPO: ghcr.io/neuro-inc/helm-charts
+      HELM_CHART_VERSION: ${{ needs.meta.outputs.version }}
+      CR_TOKEN: ${{ inputs.token }}
+    run: |
+      echo $CR_TOKEN | helm registry login ghcr.io -u x-access-token --password-stdin
+      helm package charts/platform-registry -u
+      helm push platform-registry-$HELM_CHART_VERSION.tgz oci://$HELM_REPO
+    shell: bash
+  - name: GitHub Release
+    uses: ncipollo/release-action@v1.9.0
+    with:
+      name: ${{ needs.meta.outputs.version }}
+      prerelease: ${{ needs.meta.outputs.prerelease }}
+      generateReleaseNotes: 'true'
+      tag: ${{ needs.meta.outputs.tag }}
+      token: ${{ inputs.token }}
