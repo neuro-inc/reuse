@@ -13,7 +13,7 @@ inputs:
     description: github token, <secrets.GITHUB_TOKEN>
     required: true
   actor:
-    description: github actoe, <github.actor>
+    description: github actor, <github.actor>
     required: true
 outputs:
   version:
