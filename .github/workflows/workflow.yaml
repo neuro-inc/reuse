@@ -33,7 +33,7 @@ on:
         description: Prerelease
         value: ${{ jobs.release.outputs.prerelease }}
 
-permissions: all-write
+permissions: write-all
 #  actions: write
 #  contents: read
 #  packages: write
