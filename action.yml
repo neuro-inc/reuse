@@ -55,7 +55,7 @@ runs:
         print(f"::error:: Ref {ref} doesn't contain a tag")
         sys.exit(1)
       else:
-        tag = ref[PRE:]
+        tag = ref[len(PRE_:]
 
       match = re.match(r"^v\d+\.\d+(\.\d+)?(?P<pre>(a|b|rc)\d*)?$", tag)
       if not match:
