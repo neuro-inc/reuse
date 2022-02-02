@@ -121,9 +121,9 @@ runs:
       done
     env:
       IMAGE_REPO: ghcr.io/neuro-inc/${{ inputs.image }}
-      IMAGE_TAG: ${{ needs.meta.outputs.version }}
-      CHART_VERSION: ${{ needs.meta.outputs.version }}
-      APP_VERSION: ${{ needs.meta.outputs.version }}
+      IMAGE_TAG: ${{ steps.meta.outputs.version }}
+      CHART_VERSION: ${{ steps.meta.outputs.version }}
+      APP_VERSION: ${{ steps.meta.outputs.version }}
     shell: bash
   - name: Release chart
     env:
@@ -133,14 +133,14 @@ runs:
       echo $CR_TOKEN | helm registry login ghcr.io -u x-access-token --password-stdin
       for HELM_CHART in ${{ inputs.helm_charts }}; do
         helm package charts/${HELM_CHART} -u
-        helm push ${HELM_CHART}-${{ needs.meta.outputs.version }}.tgz oci://ghcr.io/neuro-inc/helm-charts
+        helm push ${HELM_CHART}-${{ steps.meta.outputs.version }}.tgz oci://ghcr.io/neuro-inc/helm-charts
       done
     shell: bash
   - name: GitHub Release
     uses: ncipollo/release-action@v1.9.0
     with:
-      name: ${{ needs.meta.outputs.version }}
-      prerelease: ${{ needs.meta.outputs.prerelease }}
+      name: ${{ steps.meta.outputs.version }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
       generateReleaseNotes: 'true'
-      tag: ${{ needs.meta.outputs.tag }}
+      tag: ${{ steps.meta.outputs.tag }}
       token: ${{ inputs.token }}
