@@ -3,7 +3,7 @@ name: Release Service
 description: Release Neu.ro service as ghcr.io Docker image and Helm Chart
 inputs:
   ref:
-    description: Git reference to analyze
+    description: Git reference to analyze, <github.ref>
     required: true
   image:
     description: short image name without repo/owner and tag, e.g. platformstorageapi
