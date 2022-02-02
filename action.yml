@@ -49,7 +49,7 @@ runs:
         else:
           return ""
 
-      ref = ${{ inputs.ref }}
+      ref = "${{ inputs.ref }}"
       PRE = "refs/tags/"
       if not ref.startswith(PRE):
         print(f"::error:: Ref {ref} doesn't contain a tag")
