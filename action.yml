@@ -2,6 +2,9 @@
 name: Release Service
 description: Release Neu.ro service as ghcr.io Docker image and Helm Chart
 inputs:
+  ref:
+    description: Git reference to analyze
+    required: true
   image:
     description: short image name without repo/owner and tag, e.g. platformstorageapi
     required: true
@@ -37,7 +40,6 @@ runs:
   - name: Detect metadata
     id: meta
     run: |
-      import os
       import re
       import sys
 
@@ -47,7 +49,7 @@ runs:
         else:
           return ""
 
-      ref = os.environ("REF")
+      ref = ${{ inputs.ref }}
       PRE = "refs/tags/"
       if not ref.startswith(PRE):
         print(f"::error:: Ref {ref} doesn't contain a tag")
