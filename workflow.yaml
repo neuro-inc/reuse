@@ -22,27 +22,30 @@ on:
   outputs:
     version:
       description: Version
-      value: ${{ steps.meta.outputs.version }}
+      value: ${{ jobs.release.outputs.version }}
     skip:
       description: Skip
-      value: ${{ steps.meta.outputs.skip }}
+      value: ${{ jobs.release.outputs.skip }}
     tag:
       description: Tag
-      value: ${{ steps.meta.outputs.tag }}
+      value: ${{ jobs.release.outputs.tag }}
     prerelease:
       description: Prerelease
-      value: ${{ steps.meta.outputs.prerelease }}
-
+      value: ${{ jobs.release.outputs.prerelease }}
 
 permissions:
   contents: read
   packages: write
 
-
 jobs:
   release:
     name: Release image and heml chart
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      skip: ${{ steps.meta.outputs.skip }}
+      tag: ${{ steps.meta.outputs.tag }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
     steps:
     - name: Checkout commit
       uses: actions/checkout@v2
