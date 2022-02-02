@@ -99,19 +99,19 @@ runs:
     shell: bash
   - name: Tag remote latest image
     run: |
-      docker tag ${{ inputs.image }}:latest ghcr.io/neuro-inc/${{ inputs.image}}:latest
+      docker tag ${{ inputs.image }}:latest ghcr.io/neuro-inc/${{ inputs.image }}:latest
     shell: bash
   - name: Tag remote versioned image
     run: |
-      docker tag ${{ inputs.image }}:latest ghcr.io/neuro-inc/{image}:${{ steps.meta.outputs.version }}
+      docker tag ${{ inputs.image }}:latest ghcr.io/neuro-inc/${{ inputs.image }}:${{ steps.meta.outputs.version }}
     shell: bash
   - name: Push latest image to ghcr.io
     run: |
-      docker push ghcr.io/neuro-inc/${{ inputs.image}}:latest
+      docker push ghcr.io/neuro-inc/${{ inputs.image }}:latest
     shell: bash
   - name: Push versioned image to ghcr.io
     run: |
-      docker push ghcr.io/neuro-inc/${{ inputs.image}}:${{ steps.meta.outputs.version }}
+      docker push ghcr.io/neuro-inc/${{ inputs.image }}:${{ steps.meta.outputs.version }}
     shell: bash
   - name: Create chart
     run: |
