@@ -5,33 +5,33 @@
 
 on:
   workflow_call:
-  inputs:
-    image:
-      description: short image name without repo/owner and tag, e.g. platformstorageapi
-      required: true
-      type: string
-    helm-charts:
-      description: A space-separated list of helm charts
-      required: true
-      type: string
-    artifact:
-      description: The artifact name uploaded by upload-image-action
-      required: false
-      default: image
-      type: string
-  outputs:
-    version:
-      description: Version
-      value: ${{ jobs.release.outputs.version }}
-    skip:
-      description: Skip
-      value: ${{ jobs.release.outputs.skip }}
-    tag:
-      description: Tag
-      value: ${{ jobs.release.outputs.tag }}
-    prerelease:
-      description: Prerelease
-      value: ${{ jobs.release.outputs.prerelease }}
+    inputs:
+      image:
+        description: short image name without repo/owner and tag, e.g. platformstorageapi
+        required: true
+        type: string
+      helm-charts:
+        description: A space-separated list of helm charts
+        required: true
+        type: string
+      artifact:
+        description: The artifact name uploaded by upload-image-action
+        required: false
+        default: image
+        type: string
+    outputs:
+      version:
+        description: Version
+        value: ${{ jobs.release.outputs.version }}
+      skip:
+        description: Skip
+        value: ${{ jobs.release.outputs.skip }}
+      tag:
+        description: Tag
+        value: ${{ jobs.release.outputs.tag }}
+      prerelease:
+        description: Prerelease
+        value: ${{ jobs.release.outputs.prerelease }}
 
 permissions:
   contents: read
