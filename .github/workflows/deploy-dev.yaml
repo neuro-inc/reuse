@@ -1,0 +1,58 @@
+---
+# Release Service 'Called workflow'
+# Publishes Neu.ro service as ghcr.io Docker image and Helm Chart,
+# Create a github release with linked issues and pull requests
+
+on:
+  workflow_call:
+    inputs:
+      helm_charts:
+        description: A space-separated list of helm charts
+        required: true
+        type: string
+      version:
+        description: Heml chart version to deploy
+        required: true
+        type: string
+    secrets:
+      AWS_ACCEESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Deploy on dev
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout commit
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Install Helm
+      uses: azure/setup-helm@v2.0
+      with:
+        version: v3.7.0
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    - name: Update kube config
+      run: aws eks --region us-east-1 update-kubeconfig --name aws-dev
+    - name: Deploy to kubernetes
+      run: |
+        for HELM_CHART in $CHARTS; do
+          helm upgrade $HELM_CHART \
+            oci://ghcr.io/neuro-inc/helm-charts/$HELM_CHART \
+            --version ${{ inputs.version }} \
+            -f charts/$HELM_CHART/values-dev.yaml \
+            --namespace platform --install --wait --timeout 600s
+        done
+      env:
+        HELM_EXPERIMENTAL_OCI: '1'
+        CHARTS: ${{ inputs.helm_charts }}
