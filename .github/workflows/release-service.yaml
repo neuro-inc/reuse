@@ -34,38 +34,13 @@ on:
         value: ${{ jobs.release.outputs.prerelease }}
 
 permissions:
-  actions: write
-  checks: write
-  contents: write
-  deployments: write
-  id-token: write
-  issues: write
-  discussions: write
+  contents: read
   packages: write
-  pages: write
-  pull-requests: write
-  repository-projects: write
-  security-events: write
-  statuses: write
 
 jobs:
   release:
     name: Release image and heml chart
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
-      checks: write
-      contents: write
-      deployments: write
-      id-token: write
-      issues: write
-      discussions: write
-      packages: write
-      pages: write
-      pull-requests: write
-      repository-projects: write
-      security-events: write
-      statuses: write
     outputs:
       version: ${{ steps.meta.outputs.version }}
       skip: ${{ steps.meta.outputs.skip }}
