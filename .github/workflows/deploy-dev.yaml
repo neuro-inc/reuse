@@ -35,7 +35,7 @@ jobs:
     - name: Install Helm
       uses: azure/setup-helm@v2.0
       with:
-        version: v3.7.0
+        version: v3.8.0
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -54,5 +54,4 @@ jobs:
             --namespace platform --install --wait --timeout 600s
         done
       env:
-        HELM_EXPERIMENTAL_OCI: '1'
         CHARTS: ${{ inputs.helm_charts }}
