@@ -133,22 +133,18 @@ jobs:
         for HELM_CHART in $CHARTS; do
           VALUES=$(cat charts/${HELM_CHART}/values.yaml | envsubst)
           echo "$VALUES" > charts/${HELM_CHART}/values.yaml
-          CHART=$(cat charts/${HELM_CHART}/Chart.yaml | envsubst)
-          echo "$CHART" > charts/${HELM_CHART}/Chart.yaml
         done
       env:
         # envs are used by envsubst above
         IMAGE_REPO: ghcr.io/neuro-inc/${{ inputs.image }}
         IMAGE_TAG: ${{ steps.meta.outputs.version }}
-        CHART_VERSION: ${{ steps.meta.outputs.version }}
-        APP_VERSION: ${{ steps.meta.outputs.version }}
         CHARTS: ${{ inputs.helm_charts }}
       shell: bash
     - name: Release chart
       run: |
         echo $CR_TOKEN | helm registry login ghcr.io -u x-access-token --password-stdin
         for HELM_CHART in $CHARTS; do
-          helm package charts/${HELM_CHART} -u
+          helm package charts/${HELM_CHART} -u --version ${{ steps.meta.outputs.version }} --app-version ${{ steps.meta.outputs.version }}
           helm push ${HELM_CHART}-${{ steps.meta.outputs.version }}.tgz oci://ghcr.io/neuro-inc/helm-charts
         done
       env:
