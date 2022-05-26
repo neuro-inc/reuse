@@ -35,7 +35,7 @@ jobs:
     - name: Install Helm
       uses: azure/setup-helm@v2.0
       with:
-        version: v3.8.0
+        version: v3.9.0
     - name: Login to ghcr.io
       uses: docker/login-action@v1.12.0
       with:
