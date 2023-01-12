@@ -11,17 +11,18 @@ on:
         required: true
         type: string
       version:
-        description: Heml chart version to deploy
+        description: Helm chart version to deploy
         required: true
         type: string
     secrets:
       AWS_ACCESS_KEY_ID:
-        required: true
+        required: false
       AWS_SECRET_ACCESS_KEY:
-        required: true
+        required: false
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   release:
@@ -29,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout commit
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
     - name: Install Helm
@@ -42,14 +43,23 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ github.token }}
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+    # - name: Configure AWS credentials
+    #   uses: aws-actions/configure-aws-credentials@v1
+    #   with:
+    #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #     aws-region: us-east-1
+    # - name: Update kube config
+    #   run: aws eks --region us-east-1 update-kubeconfig --name aws-dev
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
+        workload_identity_provider: projects/36934857124/locations/global/workloadIdentityPools/github/providers/github
+        service_account: github@development-374312.iam.gserviceaccount.com
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
     - name: Update kube config
-      run: aws eks --region us-east-1 update-kubeconfig --name aws-dev
+      run: gcloud container clusters get-credentials dev -z us-central1-a
     - name: Deploy to kubernetes
       run: |
         echo $CR_TOKEN | helm registry login ghcr.io -u x-access-token --password-stdin
