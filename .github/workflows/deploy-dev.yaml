@@ -58,6 +58,7 @@ jobs:
         service_account: github@development-374312.iam.gserviceaccount.com
     - name: Set up Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v1
+      install_components: gke-gcloud-auth-plugin
     - name: Update kube config
       run: gcloud container clusters get-credentials dev -z us-central1-a
     - name: Deploy to kubernetes
