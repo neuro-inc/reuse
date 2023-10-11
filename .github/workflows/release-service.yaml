@@ -40,7 +40,7 @@ permissions:
 
 jobs:
   release:
-    name: Release image and heml chart
+    name: Release image and helm chart
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.meta.outputs.version }}
