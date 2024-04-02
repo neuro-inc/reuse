@@ -99,7 +99,7 @@ jobs:
     #     token: ${{ github.token }}
     #     expire-in: 30mins
     - name: Download image artifact
-      uses: actions/download-artifact@v2.1.0
+      uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.artifact }}
     - name: Login to ghcr.io
