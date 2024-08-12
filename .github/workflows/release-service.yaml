@@ -72,11 +72,11 @@ jobs:
         else:
           tag = ref[len(PRE):]
 
-        match = re.match(r"^v\d+\.\d+(\.\d+)?(?P<pre>(a|b|rc)\d*)?$", tag)
+        match = re.match(r"^v\d+\.\d+(\.\d+)?(?P<pre>-(a|b|rc)\.\d*)?$", tag)
         if not match:
           print(
             f"::error:: Invalid tag {tag}; ",
-            "The tag should have vYY.MM[.NN][{a|b|rc}N] format ",
+            "The tag should have vYY.MM[.NN][-{a|b|rc}.N] format ",
             "where YY is the current year, MM is the current month, "
             "NN is incremental number, "
             "every next month resets the number to 0, "
