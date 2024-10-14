@@ -14,7 +14,7 @@ on:
         required: true
         type: string
     secrets:
-      TF_API_TOKEN:
+      tf_api_token:
         required: true
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
     - name: Create Terraform Cloud run
       uses: neuro-inc/terraform-cloud-run-action@v24.7.0
       with:
-        token: ${{ secrets.TF_API_TOKEN }}
+        token: ${{ secrets.tf_api_token }}
         workspace: ${{ inputs.dev_workspace }}
         variables: ${{ inputs.variables }}
 
@@ -45,6 +45,6 @@ jobs:
     - name: Create Terraform Cloud run
       uses: neuro-inc/terraform-cloud-run-action@v24.7.0
       with:
-        token: ${{ secrets.TF_API_TOKEN }}
+        token: ${{ secrets.tf_api_token }}
         workspace: ${{ matrix.workspace }}
         variables: ${{ inputs.variables }}
