@@ -1,7 +1,8 @@
 ---
-# Release Service 'Called workflow'
-# Publishes Neu.ro service as ghcr.io Docker image and Helm Chart,
-# Create a github release with linked issues and pull requests
+# Release Service workflow.
+# Detects service version based on tags and commit history (used to generate prerelease version).
+# Publishes Apolo service as ghcr.io Docker image and Helm Chart,
+# Creates GitHub release with linked issues and pull requests 
 
 on:
   workflow_call:
