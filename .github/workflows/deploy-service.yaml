@@ -34,6 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: ${{ fromJSON(inputs.dev_workspace).name }}
+    concurrency: ${{ fromJSON(inputs.dev_workspace).name }}
     if: ${{ inputs.environment == 'dev' }}
     steps:
     - name: Create Terraform Cloud run
@@ -48,6 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: ${{ matrix.item.name }}
+    concurrency: ${{ matrix.item.name }}
     if: ${{ inputs.environment == 'prod' }}
     strategy:
       matrix:
