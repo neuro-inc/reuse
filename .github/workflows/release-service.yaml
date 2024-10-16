@@ -48,9 +48,10 @@ jobs:
       id: semver
       with:
         version_format: ${major}.${minor}.${patch}-dev.${increment}
-    - name: Detect version metadata
+    - name: Detect metadata
       id: meta
       run: |
+        import os
         import re
         import subprocess
         import sys
@@ -108,9 +109,12 @@ jobs:
             else:
               print(f"No commits in the current month, probably this is a job restart, using {version}")
 
-        print(f"::set-output name=tag::{tag}")
-        print(f"::set-output name=version::{version}")
-        print(f"::set-output name=prerelease::{to_bool(is_prerelease)}")
+        print("Detected version:", version)
+
+        with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            print(f"tag={tag}", file=f)
+            print(f"version={version}", file=f)
+            print(f"prerelease={to_bool(is_prerelease)}", file=f)
       shell: python
     - name: Install Helm
       uses: azure/setup-helm@v4
