@@ -72,7 +72,7 @@ jobs:
           if not match:
             print(
               f"::error:: Invalid tag {tag}; ",
-              "The tag should have vYY.MM.NN[-{a|b|rc}.N] format ",
+              "The tag should have vYY.MM.NN[-{a|b|rc|dev}.N] format ",
               "where YY is the current year, MM is the current month, "
               "NN is incremental number, "
               "every next month the number resets to 0, "
