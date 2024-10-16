@@ -88,7 +88,7 @@ jobs:
           version_major = int(${{ steps.semver.outputs.major }})
           version_minor = int(${{ steps.semver.outputs.minor }})
 
-          year = datetime.utcnow().year
+          year = datetime.utcnow().year % 1000
           month = datetime.utcnow().month
 
           if (year > version_major or month > version_minor):
