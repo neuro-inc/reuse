@@ -68,7 +68,7 @@ jobs:
         if tag:
           print(f"Commit has tag {tag}, checking it's format")
 
-          match = re.match(r"^v\d+\.\d+(\.\d+)?(?P<pre>-(a|b|rc)\.\d*)?$", tag)
+          match = re.match(r"^v\d+\.\d+(\.\d+)?(?P<pre>-(a|b|rc|dev)\.\d*)?$", tag)
           if not match:
             print(
               f"::error:: Invalid tag {tag}; ",
@@ -76,7 +76,7 @@ jobs:
               "where YY is the current year, MM is the current month, "
               "NN is incremental number, "
               "every next month the number resets to 0, "
-              "a -- alpha, b -- beta, rc -- release candidate, N -- number.",
+              "a -- alpha, b -- beta, rc -- release candidate, dev -- development, N -- number.",
             )
             sys.exit(1)
           else:
