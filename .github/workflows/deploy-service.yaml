@@ -1,0 +1,64 @@
+on:
+  workflow_call:
+    inputs:
+      dev_workspace:
+        description: |
+          Terraform Cloud dev workspace. Should be a JSON object of the following format:
+          {"name": "...", "workspace": "..."}. Name field will be used to create
+          Github Actions environment name.
+        required: true
+        type: string
+      prod_workspaces:
+        description: |
+          Terraform Cloud prod workspaces. Should be a JSON list of the following format:
+          [{"name": "...", "workspace": "..."}, ...]. Name field will be used to create
+          Github Actions environment name.
+        required: false
+        type: string
+      environment:
+        description: Environment type, should be dev or prod.
+        required: false
+        default: dev
+        type: string
+      variables:
+        description: Terraform Cloud variables which will be applied to each workspace.
+        required: true
+        type: string
+    secrets:
+      tf_api_token:
+        required: true
+
+jobs:
+  deploy_dev:
+    name: Deploy to ${{ fromJSON(inputs.dev_workspace).name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: ${{ fromJSON(inputs.dev_workspace).name }}
+    concurrency: ${{ fromJSON(inputs.dev_workspace).name }}
+    if: inputs.environment == 'dev'
+    steps:
+    - name: Create Terraform Cloud run
+      uses: neuro-inc/terraform-cloud-run-action@v24.7.0
+      with:
+        token: ${{ secrets.tf_api_token }}
+        workspace: ${{ fromJSON(inputs.dev_workspace).workspace }}
+        variables: ${{ inputs.variables }}
+
+  deploy_prod:
+    name: Deploy to ${{ matrix.item.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: ${{ matrix.item.name }}
+    concurrency: ${{ matrix.item.name }}
+    if: inputs.environment == 'prod'
+    strategy:
+      matrix:
+        item: ${{ fromJSON(inputs.prod_workspaces) }}
+    steps:
+    - name: Create Terraform Cloud run
+      uses: neuro-inc/terraform-cloud-run-action@v24.7.0
+      with:
+        token: ${{ secrets.tf_api_token }}
+        workspace: ${{ matrix.item.workspace }}
+        variables: ${{ inputs.variables }}
+

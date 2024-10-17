@@ -1,7 +1,9 @@
 ---
-# Release Service 'Called workflow'
-# Publishes Neu.ro service as ghcr.io Docker image and Helm Chart,
-# Create a github release with linked issues and pull requests
+# Release Service workflow.
+# Detects service version based on tags and commit history. If commit has no tag
+# workflow generates prerelease version.
+# Publishes Apolo service as ghcr.io Docker image and Helm Chart,
+# Creates GitHub release with linked issues and pull requests 
 
 on:
   workflow_call:
@@ -23,12 +25,6 @@ on:
       version:
         description: Version
         value: ${{ jobs.release.outputs.version }}
-      skip:
-        description: Skip
-        value: ${{ jobs.release.outputs.skip }}
-      tag:
-        description: Tag
-        value: ${{ jobs.release.outputs.tag }}
       prerelease:
         description: Prerelease
         value: ${{ jobs.release.outputs.prerelease }}
@@ -44,50 +40,83 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.meta.outputs.version }}
-      skip: ${{ steps.meta.outputs.skip }}
-      tag: ${{ steps.meta.outputs.tag }}
       prerelease: ${{ steps.meta.outputs.prerelease }}
     steps:
     - name: Checkout commit
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+    - uses: paulhatch/semantic-version@v5.4.0
+      id: semver
+      with:
+        version_format: ${major}.${minor}.${patch}-dev.${increment}
     - name: Detect metadata
       id: meta
       run: |
+        import os
         import re
+        import subprocess
         import sys
+        from datetime import datetime, timedelta
 
-        def dump(val):
-          if val:
-            return "true"
-          else:
-            return ""
+        def to_bool(value):
+          return "true" if value else ""
 
         ref = "${{ github.ref }}"
         PRE = "refs/tags/"
-        if not ref.startswith(PRE):
-          print(f"::error:: Ref {ref} doesn't contain a tag")
-          sys.exit(1)
-        else:
-          tag = ref[len(PRE):]
+        tag = ref[len(PRE):] if ref.startswith(PRE) else ""
 
-        match = re.match(r"^v\d+\.\d+(\.\d+)?(?P<pre>-(a|b|rc)\.\d*)?$", tag)
-        if not match:
-          print(
-            f"::error:: Invalid tag {tag}; ",
-            "The tag should have vYY.MM[.NN][-{a|b|rc}.N] format ",
-            "where YY is the current year, MM is the current month, "
-            "NN is incremental number, "
-            "every next month resets the number to 0, "
-            "a -- alpha, b -- beta, rc -- release candidate, N -- number.",
-          )
-          sys.exit(1)
+        if tag:
+          print(f"Commit has tag {tag}, checking it's format")
+
+          match = re.match(r"^v\d+\.\d+(\.\d+)?(?P<pre>-(a|b|rc|dev)\.\d*)?$", tag)
+          if not match:
+            print(
+              f"::error:: Invalid tag {tag}; ",
+              "The tag should have vYY.MM.NN[-{a|b|rc|dev}.N] format ",
+              "where YY is the current year, MM is the current month, "
+              "NN is incremental number, "
+              "every next month the number resets to 0, "
+              "a -- alpha, b -- beta, rc -- release candidate, dev -- development, N -- number.",
+            )
+            sys.exit(1)
+          else:
+            version = tag[1:]
+            is_prerelease = bool(match.group("pre"))
         else:
-          print(f"::set-output name=tag::{tag}")
-          version = tag[1:]
-          print(f"::set-output name=version::{version}")
-          print(f"::set-output name=prerelease::{dump(match.group('pre'))}")
+          print("Commit has not tag, generating version based on the commit history")
+
+          is_prerelease = True
+          version = "${{ steps.semver.outputs.version }}"
+          version_major = int(${{ steps.semver.outputs.major }})
+          version_minor = int(${{ steps.semver.outputs.minor }})
+
+          year = datetime.utcnow().year % 1000
+          month = datetime.utcnow().month
+
+          if (year > version_major or month > version_minor):
+            print(
+              f"Generated version {version} doesn't correspond to the current month,",
+              "checking the next version",
+            )
+
+            prev_month_last_day = datetime(year, month, 1) - timedelta(days=1)
+            prev_month_last_day = prev_month_last_day.strftime("%d.%m.%Y")
+            patch = subprocess.check_output(
+              f"git log --after '{prev_month_last_day}' --pretty='oneline' | wc -l", shell=True
+            ).decode().strip()
+            patch = int(patch) - 1
+            if patch >= 0:
+              version = f"{year}.{month}.0-dev.{patch}"
+            else:
+              print(f"No commits in the current month, probably this is a job restart, using {version}")
+
+        print("Detected version:", version)
+
+        with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            print(f"tag={tag}", file=f)
+            print(f"version={version}", file=f)
+            print(f"prerelease={to_bool(is_prerelease)}", file=f)
       shell: python
     - name: Install Helm
       uses: azure/setup-helm@v4
@@ -153,9 +182,10 @@ jobs:
       shell: bash
     - name: GitHub Release
       uses: ncipollo/release-action@v1.9.0
+      if: steps.meta.outputs.prerelease != 'true'
       with:
         name: ${{ steps.meta.outputs.version }}
         prerelease: ${{ steps.meta.outputs.prerelease }}
         generateReleaseNotes: 'true'
-        tag: ${{ steps.meta.outputs.tag }}
+        tag: ${{ steps.semver.outputs.version_tag }}
         token: ${{ github.token }}
