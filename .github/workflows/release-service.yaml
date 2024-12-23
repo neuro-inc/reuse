@@ -3,7 +3,7 @@
 # Detects service version based on tags and commit history. If commit has no tag
 # workflow generates prerelease version.
 # Publishes Apolo service as ghcr.io Docker image and Helm Chart,
-# Creates GitHub release with linked issues and pull requests 
+# Creates GitHub release with linked issues and pull requests
 
 on:
   workflow_call:
