@@ -1,0 +1,33 @@
+---
+name: Upstream to PR
+
+on:
+  workflow_call:
+    inputs: {upstream_repository: {required: true, type: string}, upstream_tag_regex: {required: false, type: string}, upstream_branch: {required: false,
+        type: string, default: main}}
+    secrets:
+      personal_access_token:
+        required: true
+
+jobs:
+  autoupdate:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.personal_access_token }}
+
+    - uses: fopina/upstream-to-pr@v1
+      if: inputs.upstream_tag_regex != null
+      with:
+        token: ${{ secrets.personal_access_token }}
+        upstream-repository: ${{ inputs.upstream_repository }}
+        upstream-tag: ${{ inputs.upstream_tag_regex }}
+
+    - uses: fopina/upstream-to-pr@v1
+      if: inputs.upstream_tag_regex == null && inputs.upstream_branch != null
+      with:
+        token: ${{ secrets.personal_access_token }}
+        upstream-repository: ${{ inputs.upstream_repository }}
+        upstream-branch: ${{ inputs.upstream_branch }}
