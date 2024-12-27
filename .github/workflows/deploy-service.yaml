@@ -1,3 +1,4 @@
+---
 on:
   workflow_call:
     inputs:
@@ -61,4 +62,3 @@ jobs:
         token: ${{ secrets.tf_api_token }}
         workspace: ${{ matrix.item.workspace }}
         variables: ${{ inputs.variables }}
-
