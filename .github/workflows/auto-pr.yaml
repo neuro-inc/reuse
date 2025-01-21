@@ -36,5 +36,5 @@ jobs:
 
     - name: Display output
       run: |
-        echo "Tag: ${{ steps.autopr-tag.outputs.tag }}"
-        echo "Branch: ${{ steps.autopr-branch.outputs.branch }}"
+        echo "Tag: ${{ steps.autopr-tag.outputs.pull-request-url }}"
+        echo "Branch: ${{ steps.autopr-branch.outputs.pull-request-url }}"
