@@ -4,7 +4,7 @@ name: Upstream to PR
 on:
   workflow_call:
     inputs: {upstream_repository: {required: true, type: string}, upstream_tag_regex: {required: false, type: string}, upstream_branch: {required: false,
-        type: string, default: main}}
+        type: string, default: main}, reviewers: {required: false, type: string}, team_reviewers: {required: false, type: string}}
     secrets:
       personal_access_token:
         required: true
