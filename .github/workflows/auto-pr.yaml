@@ -25,6 +25,8 @@ jobs:
         token: ${{ secrets.personal_access_token }}
         upstream-repository: ${{ inputs.upstream_repository }}
         upstream-tag: ${{ inputs.upstream_tag_regex }}
+        reviewers: ${{ inputs.reviewers }}
+        team_reviewers: ${{ inputs.team_reviewers }}
 
     - uses: neuro-inc/upstream-to-pr@main
       id: autopr-branch
@@ -33,6 +35,8 @@ jobs:
         token: ${{ secrets.personal_access_token }}
         upstream-repository: ${{ inputs.upstream_repository }}
         upstream-branch: ${{ inputs.upstream_branch }}
+        reviewers: ${{ inputs.reviewers }}
+        team_reviewers: ${{ inputs.team_reviewers }}
 
     - name: Display output
       run: |
