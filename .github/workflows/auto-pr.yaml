@@ -18,16 +18,23 @@ jobs:
         fetch-depth: 0
         token: ${{ secrets.personal_access_token }}
 
-    - uses: fopina/upstream-to-pr@v1
+    - uses: neuro-inc/upstream-to-pr@main
+      id: autopr-tag
       if: inputs.upstream_tag_regex != null
       with:
         token: ${{ secrets.personal_access_token }}
         upstream-repository: ${{ inputs.upstream_repository }}
         upstream-tag: ${{ inputs.upstream_tag_regex }}
 
-    - uses: fopina/upstream-to-pr@v1
+    - uses: neuro-inc/upstream-to-pr@main
+      id: autopr-branch
       if: inputs.upstream_tag_regex == null && inputs.upstream_branch != null
       with:
         token: ${{ secrets.personal_access_token }}
         upstream-repository: ${{ inputs.upstream_repository }}
         upstream-branch: ${{ inputs.upstream_branch }}
+
+    - name: Display output
+      run: |
+        echo "Tag: ${{ steps.autopr-tag.outputs.tag }}"
+        echo "Branch: ${{ steps.autopr-branch.outputs.branch }}"
