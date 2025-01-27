@@ -18,7 +18,7 @@ jobs:
         fetch-depth: 0
         token: ${{ secrets.personal_access_token }}
 
-    - uses: neuro-inc/upstream-to-pr@main
+    - uses: fopina/upstream-to-pr@v1.4.0
       id: autopr-tag
       if: inputs.upstream_tag_regex != null
       with:
@@ -28,7 +28,7 @@ jobs:
         reviewers: ${{ inputs.reviewers }}
         team_reviewers: ${{ inputs.team_reviewers }}
 
-    - uses: neuro-inc/upstream-to-pr@main
+    - uses: fopina/upstream-to-pr@v1.4.0
       id: autopr-branch
       if: inputs.upstream_tag_regex == null && inputs.upstream_branch != null
       with:
