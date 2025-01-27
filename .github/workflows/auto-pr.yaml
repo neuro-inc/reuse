@@ -4,7 +4,7 @@ name: Upstream to PR
 on:
   workflow_call:
     inputs: {upstream_repository: {required: true, type: string}, upstream_tag_regex: {required: false, type: string}, upstream_branch: {required: false,
-        type: string, default: main}}
+        type: string, default: main}, reviewers: {required: false, type: string}, team_reviewers: {required: false, type: string}}
     secrets:
       personal_access_token:
         required: true
@@ -18,16 +18,27 @@ jobs:
         fetch-depth: 0
         token: ${{ secrets.personal_access_token }}
 
-    - uses: fopina/upstream-to-pr@v1
+    - uses: fopina/upstream-to-pr@v1.4.0
+      id: autopr-tag
       if: inputs.upstream_tag_regex != null
       with:
         token: ${{ secrets.personal_access_token }}
         upstream-repository: ${{ inputs.upstream_repository }}
         upstream-tag: ${{ inputs.upstream_tag_regex }}
+        reviewers: ${{ inputs.reviewers }}
+        team_reviewers: ${{ inputs.team_reviewers }}
 
-    - uses: fopina/upstream-to-pr@v1
+    - uses: fopina/upstream-to-pr@v1.4.0
+      id: autopr-branch
       if: inputs.upstream_tag_regex == null && inputs.upstream_branch != null
       with:
         token: ${{ secrets.personal_access_token }}
         upstream-repository: ${{ inputs.upstream_repository }}
         upstream-branch: ${{ inputs.upstream_branch }}
+        reviewers: ${{ inputs.reviewers }}
+        team_reviewers: ${{ inputs.team_reviewers }}
+
+    - name: Display output
+      run: |
+        echo "Tag: ${{ steps.autopr-tag.outputs.pull-request-url }}"
+        echo "Branch: ${{ steps.autopr-branch.outputs.pull-request-url }}"
