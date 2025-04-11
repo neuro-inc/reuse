@@ -44,6 +44,7 @@ jobs:
         token: ${{ secrets.tf_api_token }}
         workspace: ${{ fromJSON(inputs.dev_workspace).workspace }}
         variables: ${{ inputs.variables }}
+        apply: 'true'
 
   deploy_prod:
     name: Deploy to ${{ matrix.item.name }}
