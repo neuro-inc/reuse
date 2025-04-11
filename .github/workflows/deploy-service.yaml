@@ -39,11 +39,12 @@ jobs:
     if: inputs.environment == 'dev'
     steps:
     - name: Create Terraform Cloud run
-      uses: neuro-inc/terraform-cloud-run-action@v24.7.0
+      uses: neuro-inc/terraform-cloud-run-action@v25.4.0
       with:
         token: ${{ secrets.tf_api_token }}
         workspace: ${{ fromJSON(inputs.dev_workspace).workspace }}
         variables: ${{ inputs.variables }}
+        apply: 'true'
 
   deploy_prod:
     name: Deploy to ${{ matrix.item.name }}
@@ -57,8 +58,9 @@ jobs:
         item: ${{ fromJSON(inputs.prod_workspaces) }}
     steps:
     - name: Create Terraform Cloud run
-      uses: neuro-inc/terraform-cloud-run-action@v24.7.0
+      uses: neuro-inc/terraform-cloud-run-action@v25.4.0
       with:
         token: ${{ secrets.tf_api_token }}
         workspace: ${{ matrix.item.workspace }}
         variables: ${{ inputs.variables }}
+        apply: 'false'
