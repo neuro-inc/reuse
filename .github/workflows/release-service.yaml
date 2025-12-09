@@ -10,7 +10,7 @@ on:
     inputs:
       image:
         description: short image name without repo/owner and tag, e.g. platformstorageapi
-        required: true
+        required: false
         type: string
       helm_charts:
         description: A space-separated list of helm charts
@@ -138,22 +138,27 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ github.token }}
     - name: Load image into docker
+      if: inputs.image != ''
       run: |
         docker load --input ${{ inputs.image }}.tar
       shell: bash
     - name: Tag remote latest image
+      if: inputs.image != ''
       run: |
         docker tag ${{ inputs.image }}:latest ghcr.io/neuro-inc/${{ inputs.image }}:latest
       shell: bash
     - name: Tag remote versioned image
+      if: inputs.image != ''
       run: |
         docker tag ${{ inputs.image }}:latest ghcr.io/neuro-inc/${{ inputs.image }}:${{ steps.meta.outputs.version }}
       shell: bash
     - name: Push latest image to ghcr.io
+      if: inputs.image != ''
       run: |
         docker push ghcr.io/neuro-inc/${{ inputs.image }}:latest
       shell: bash
     - name: Push versioned image to ghcr.io
+      if: inputs.image != ''
       run: |
         docker push ghcr.io/neuro-inc/${{ inputs.image }}:${{ steps.meta.outputs.version }}
       shell: bash
