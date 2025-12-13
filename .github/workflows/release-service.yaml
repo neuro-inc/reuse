@@ -122,21 +122,22 @@ jobs:
       uses: azure/setup-helm@v4
       with:
         version: v3.14.0
-    # - name: Purge old artifacts
-    #   uses: kolpav/purge-artifacts-action@v1
-    #   with:
-    #     token: ${{ github.token }}
-    #     expire-in: 30mins
-    - name: Download image artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ inputs.artifact }}
     - name: Login to ghcr.io
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ github.token }}
+    # - name: Purge old artifacts
+    #   uses: kolpav/purge-artifacts-action@v1
+    #   with:
+    #     token: ${{ github.token }}
+    #     expire-in: 30mins
+    - name: Download image artifact
+      if: inputs.image != ''
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact }}
     - name: Load image into docker
       if: inputs.image != ''
       run: |
