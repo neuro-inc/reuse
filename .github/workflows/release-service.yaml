@@ -170,7 +170,7 @@ jobs:
       shell: bash
     - name: Create chart
       run: |
-        CHARTS=$(printf '%s\n' "$CHARTS" | tr ',\\n' ' ' | xargs)
+        CHARTS=$(printf '%s\n' "$CHARTS" | tr $',\n' ' ' | xargs)
         for HELM_CHART in $CHARTS; do
           VALUES=$(cat charts/${HELM_CHART}/values.yaml | envsubst)
           echo "$VALUES" > charts/${HELM_CHART}/values.yaml
@@ -184,7 +184,7 @@ jobs:
     - name: Release chart
       run: |
         echo $CR_TOKEN | helm registry login ghcr.io -u x-access-token --password-stdin
-        CHARTS=$(printf '%s\n' "$CHARTS" | tr ',\\n' ' ' | xargs)
+        CHARTS=$(printf '%s\n' "$CHARTS" | tr $',\n' ' ' | xargs)
         for HELM_CHART in $CHARTS; do
           helm package charts/${HELM_CHART} -u --version ${{ steps.meta.outputs.version }} --app-version ${{ steps.meta.outputs.version }}
           helm push ${HELM_CHART}-${{ steps.meta.outputs.version }}.tgz oci://ghcr.io/neuro-inc/helm-charts${{ inputs.helm_chart_repo_prefix }}
