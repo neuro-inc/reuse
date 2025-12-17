@@ -16,7 +16,7 @@ on:
         description: A list of helm charts separated by space, comma, or newline
         required: true
         type: string
-      helm_repo_prefix:
+      helm_chart_repo_prefix:
         description: The helm chart repository prefix
         required: false
         default: ""
@@ -187,7 +187,7 @@ jobs:
         CHARTS=$(printf '%s\n' "$CHARTS" | tr ',\\n' ' ' | xargs)
         for HELM_CHART in $CHARTS; do
           helm package charts/${HELM_CHART} -u --version ${{ steps.meta.outputs.version }} --app-version ${{ steps.meta.outputs.version }}
-          helm push ${HELM_CHART}-${{ steps.meta.outputs.version }}.tgz oci://ghcr.io/neuro-inc/helm-charts${{ inputs.helm_repo_prefix }}
+          helm push ${HELM_CHART}-${{ steps.meta.outputs.version }}.tgz oci://ghcr.io/neuro-inc/helm-charts${{ inputs.helm_chart_repo_prefix }}
         done
       env:
         CHARTS: ${{ inputs.helm_charts }}
