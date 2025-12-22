@@ -19,7 +19,7 @@ on:
       helm_chart_repo_prefix:
         description: The helm chart repository prefix
         required: false
-        default: ""
+        default: ''
         type: string
       artifact:
         description: The artifact name uploaded by upload-image-action
