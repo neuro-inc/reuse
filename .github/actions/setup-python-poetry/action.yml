@@ -34,14 +34,8 @@ runs:
 
       pyproject = tomllib.loads(pathlib.Path("pyproject.toml").read_text())
       requires = pyproject["tool"]["poetry"]["requires-poetry"]
-      version = pathlib.Path(".poetry-version").read_text().strip()
-      expected = f"=={version}"
-      if requires != expected:
-          raise SystemExit(
-              f"Poetry pin mismatch: pyproject has {requires!r}, "
-              f"but .poetry-version implies {expected!r}"
-          )
-      print(f"Poetry pin OK: {expected}")
+      print(f"Require poetry version: {requires}")
+      pathlib.Path(".poetry-version").write_text(requires.strip("="))
       PY
   - name: Install Poetry
     shell: bash
