@@ -35,13 +35,13 @@ runs:
       pyproject = tomllib.loads(pathlib.Path("pyproject.toml").read_text())
       requires = pyproject["tool"]["poetry"]["requires-poetry"]
       print(f"Require poetry version: {requires}")
-      pathlib.Path(".poetry-version").write_text(requires)
+      pathlib.Path(".poetry-version").write_text(requires.strip("="))
       PY
   - name: Install Poetry
     shell: bash
     run: |
       POETRY_VERSION="$(cat .poetry-version)"
-      pip install "poetry${POETRY_VERSION}"
+      pip install "poetry==${POETRY_VERSION}"
   - name: Setup Python dependencies cache
     uses: actions/cache@v5
     with:
