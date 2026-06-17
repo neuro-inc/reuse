@@ -35,7 +35,7 @@ runs:
       pyproject = tomllib.loads(pathlib.Path("pyproject.toml").read_text())
       requires = pyproject["tool"]["poetry"]["requires-poetry"]
       print(f"Require poetry version: {requires}")
-      pathlib.Path(".poetry-version").write_text("\n")
+      pathlib.Path(".poetry-version").write_text(requires + "\n")
       PY
   - name: Install Poetry
     shell: bash
