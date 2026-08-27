@@ -54,6 +54,7 @@ jobs:
     concurrency: ${{ matrix.item.name }}
     if: inputs.environment == 'prod'
     strategy:
+      fail-fast: false
       matrix:
         item: ${{ fromJSON(inputs.prod_workspaces) }}
     steps:
