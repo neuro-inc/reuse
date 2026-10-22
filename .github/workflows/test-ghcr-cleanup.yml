@@ -1,0 +1,29 @@
+---
+name: Test GHCR cleanup
+on:
+  push:
+    branches: [master]
+    paths:
+    - .github/actions/cleanup-ghcr-images/**
+    - .github/workflows/test-ghcr-cleanup.yml
+  pull_request:
+    paths:
+    - .github/actions/cleanup-ghcr-images/**
+    - .github/workflows/test-ghcr-cleanup.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+    - name: Test cleanup safeguards
+      run: python3 -m unittest discover -s .github/actions/cleanup-ghcr-images -p 'test_*.py'
+    - name: Check types
+      run: |
+        python3 -m pip install mypy==1.18.2
+        python3 -m mypy --strict .github/actions/cleanup-ghcr-images

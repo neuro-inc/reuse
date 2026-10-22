@@ -1,0 +1,43 @@
+---
+name: Clean temporary GHCR images
+description: Remove expired temporary image graphs while preserving protected digests.
+inputs:
+  protected-digests-file:
+    description: JSON file mapping explicit GHCR organization packages to protected digest lists.
+    required: true
+  temporary-tag-pattern:
+    description: Python regular expression that fully matches temporary image tags.
+    required: true
+  retention-days:
+    description: Retain temporary images for this positive number of days.
+    default: '90'
+  apply:
+    description: Delete eligible versions when true. Otherwise, report candidates.
+    default: 'false'
+  token:
+    description: GitHub token with read access to packages and write access when applying cleanup.
+    default: ${{ github.token }}
+runs:
+  using: composite
+  steps:
+  - uses: actions/setup-python@v6
+    with:
+      python-version: '3.12'
+  - uses: docker/setup-buildx-action@v4
+  - uses: docker/login-action@v4.3.0
+    with:
+      registry: ghcr.io
+      username: ${{ github.actor }}
+      password: ${{ inputs.token }}
+  - name: Inspect or delete expired temporary images
+    shell: bash
+    env:
+      GH_TOKEN: ${{ inputs.token }}
+      PROTECTED_DIGESTS_FILE: ${{ inputs.protected-digests-file }}
+      TEMPORARY_TAG_PATTERN: ${{ inputs.temporary-tag-pattern }}
+      RETENTION_DAYS: ${{ inputs.retention-days }}
+      APPLY: ${{ inputs.apply }}
+    run: |
+      python3 "$GITHUB_ACTION_PATH/cleanup_images.py" "$PROTECTED_DIGESTS_FILE" \
+        --temporary-tag-pattern "$TEMPORARY_TAG_PATTERN" \
+        --retention-days "$RETENTION_DAYS" --apply "$APPLY"
