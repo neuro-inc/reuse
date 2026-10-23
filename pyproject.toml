@@ -1,0 +1,12 @@
+[tool.black]
+line-length = 79
+
+[tool.isort]
+profile = "black"
+line_length = 79
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = [".github/actions/cleanup-ghcr-images", "tests"]
+mypy_path = ".github/actions/cleanup-ghcr-images"
