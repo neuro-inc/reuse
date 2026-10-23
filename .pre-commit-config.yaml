@@ -13,12 +13,10 @@ repos:
   rev: 9.0.0a3
   hooks:
   - id: isort
-    args: [--profile, black, --line-length, '79']
 - repo: https://github.com/psf/black-pre-commit-mirror
   rev: 26.5.1
   hooks:
   - id: black
-    args: [--line-length, '79']
     language_version: python3   # Should be a command that runs python3.6+
 - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
   rev: 0.2.3

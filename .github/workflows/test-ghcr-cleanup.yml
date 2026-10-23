@@ -6,10 +6,14 @@ on:
     paths:
     - .github/actions/cleanup-ghcr-images/**
     - .github/workflows/test-ghcr-cleanup.yml
+    - tests/**
+    - pyproject.toml
   pull_request:
     paths:
     - .github/actions/cleanup-ghcr-images/**
     - .github/workflows/test-ghcr-cleanup.yml
+    - tests/**
+    - pyproject.toml
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,8 +26,10 @@ jobs:
       with:
         python-version: '3.12'
     - name: Test cleanup safeguards
-      run: python3 -m unittest discover -s .github/actions/cleanup-ghcr-images -p 'test_*.py'
+      env:
+        PYTHONPATH: .github/actions/cleanup-ghcr-images
+      run: python3 -m unittest discover -s tests -p 'test_*.py'
     - name: Check types
       run: |
         python3 -m pip install mypy==1.18.2
-        python3 -m mypy --strict .github/actions/cleanup-ghcr-images
+        python3 -m mypy

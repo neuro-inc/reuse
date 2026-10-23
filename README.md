@@ -67,7 +67,7 @@ Deletion failures can leave a partially removed graph, which a later run can fin
 Run the safety tests and type checks with Python 3.12:
 
 ```sh
-python3 -m unittest discover -s .github/actions/cleanup-ghcr-images -p 'test_*.py'
+PYTHONPATH=.github/actions/cleanup-ghcr-images python3 -m unittest discover -s tests -p 'test_*.py'
 python3 -m pip install mypy==1.18.2
-python3 -m mypy --strict .github/actions/cleanup-ghcr-images
+python3 -m mypy
 ```
