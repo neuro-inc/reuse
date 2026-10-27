@@ -1,0 +1,79 @@
+---
+on:
+  workflow_call:
+    inputs:
+      chart:
+        description: Helm chart name in the shared OCI chart repository
+        required: true
+        type: string
+      version:
+        description: Published chart version without a leading v
+        required: true
+        type: string
+      setup_make_target:
+        description: Make target that prepares the caller's chart checks
+        required: false
+        default: setup-test
+        type: string
+      verify_make_target:
+        description: Make target that verifies the downloaded chart
+        required: true
+        type: string
+      chart_directory:
+        description: Directory where Helm untars the published chart
+        required: false
+        default: build/release
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  verify:
+    name: Verify published Helm chart
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PUBLISHED_CHART: ${{ inputs.chart }}
+      PUBLISHED_CHART_VERSION: ${{ inputs.version }}
+      PUBLISHED_CHART_DIRECTORY: ${{ inputs.chart_directory }}
+      PUBLISHED_CHART_DIR: ${{ format('{0}/{1}', inputs.chart_directory, inputs.chart) }}
+      SETUP_MAKE_TARGET: ${{ inputs.setup_make_target }}
+      VERIFY_MAKE_TARGET: ${{ inputs.verify_make_target }}
+    steps:
+    - name: Checkout verification revision
+      uses: actions/checkout@v4
+    - name: Validate inputs
+      shell: bash
+      run: |
+        [[ "$PUBLISHED_CHART" =~ ^[a-z0-9][a-z0-9-]*$ ]]
+        [[ "$PUBLISHED_CHART_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]
+        [[ "$SETUP_MAKE_TARGET" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]]
+        [[ "$VERIFY_MAKE_TARGET" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]]
+    - name: Setup Python
+      uses: neuro-inc/reuse/.github/actions/setup-python-poetry@v26.8.0
+    - name: Prepare chart checks
+      run: make -- "$SETUP_MAKE_TARGET"
+    - name: Download published chart
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        printf '%s' "$GH_TOKEN" | helm registry login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+        helm pull "oci://ghcr.io/neuro-inc/helm-charts/$PUBLISHED_CHART" \
+          --version "$PUBLISHED_CHART_VERSION" \
+          --untar \
+          --untardir "$PUBLISHED_CHART_DIRECTORY"
+    - name: Verify published chart
+      run: make -- "$VERIFY_MAKE_TARGET"
+    - name: Record verification summary
+      shell: bash
+      run: |
+        {
+          printf '## Published chart verified\n\n'
+          printf -- '- Chart: `%s`\n' "$PUBLISHED_CHART"
+          printf -- '- Version: `%s`\n' "$PUBLISHED_CHART_VERSION"
+          printf -- '- Verification source: `%s`\n' "$GITHUB_SHA"
+          printf -- '- Registry: `oci://ghcr.io/neuro-inc/helm-charts/%s`\n' "$PUBLISHED_CHART"
+        } >> "$GITHUB_STEP_SUMMARY"
