@@ -1,7 +1,6 @@
 import os
 import subprocess
 import tempfile
-import textwrap
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -15,7 +14,12 @@ def script(name: str) -> str:
     step = workflow.split(f"    - name: {name}\n", 1)[1]
     step = step.split("\n    - ", 1)[0]
     body = step.split("      run: |\n", 1)[1]
-    return textwrap.dedent(body.split("\n      shell:", 1)[0])
+    lines = []
+    for line in body.splitlines():
+        if line and not line.startswith("        "):
+            break
+        lines.append(line[8:] if line else "")
+    return "\n".join(lines)
 
 
 class ReleaseServiceTests(unittest.TestCase):
