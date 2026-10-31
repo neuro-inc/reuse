@@ -52,33 +52,6 @@ jobs:
     steps:
     - name: Checkout commit
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - name: Detect metadata
-      id: meta
-      run: |
-        import os
-        import re
-        from datetime import datetime, timezone
-
-        ref = os.environ["GITHUB_REF"]
-        tag = ref.removeprefix("refs/tags/") if ref.startswith("refs/tags/") else ""
-        if tag:
-            match = re.fullmatch(r"v\d+\.\d+(?:\.\d+)?(?P<pre>-(?:a|b|rc|dev)\.\d+)?", tag)
-            if not match:
-                raise ValueError("Release tags must use vYY.MM.N[-dev.N] format.")
-            version = tag[1:]
-            prerelease = bool(match.group("pre"))
-        else:
-            now = datetime.now(timezone.utc)
-            version = f"{now.year % 100}.{now.month}.0-dev.{int(os.environ['GITHUB_RUN_ID'])}"
-            prerelease = True
-        print("Detected version:", version)
-        with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-            print(f"tag={tag}", file=output)
-            print(f"version={version}", file=output)
-            print(f"prerelease={'true' if prerelease else ''}", file=output)
-      shell: python
     - name: Install Helm
       uses: azure/setup-helm@v4
       with:
@@ -89,32 +62,13 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ github.token }}
-    - name: Reject existing release versions
-      env:
-        VERSION: ${{ steps.meta.outputs.version }}
-        IMAGE: ${{ inputs.image }}
-        CHARTS: ${{ inputs.helm_charts }}
-        CHART_PREFIX: ${{ inputs.helm_chart_repo_prefix }}
-      shell: python
-      run: |
-        import os
-        import subprocess
-
-        version = os.environ["VERSION"]
-        commands = []
-        if os.environ["IMAGE"]:
-            commands.append(["docker", "buildx", "imagetools", "inspect", f"ghcr.io/neuro-inc/{os.environ['IMAGE']}:{version}"])
-        for chart in os.environ["CHARTS"].replace(",", " ").split():
-            commands.append(["helm", "show", "chart", f"oci://ghcr.io/neuro-inc/helm-charts{os.environ['CHART_PREFIX']}/{chart}", "--version", version])
-        for command in commands:
-            result = subprocess.run(command, capture_output=True, text=True)
-            if result.returncode == 0:
-                raise RuntimeError(f"Version {version} already exists; published versions are immutable.")
-            error = (result.stdout + result.stderr).lower()
-            if any(word in error for word in ("unauthorized", "denied", "forbidden", "authorization")):
-                raise RuntimeError("Cannot verify release absence: registry access failed.")
-            if not any(word in error for word in ("manifest unknown", "not found", "404")):
-                raise RuntimeError("Cannot verify release absence: registry lookup failed.")
+    - name: Prepare immutable release
+      id: meta
+      uses: neuro-inc/reuse/.github/actions/prepare-release@f1efd7bd3fb0d8064fdce75681c0e3f073378fdb
+      with:
+        image: ${{ inputs.image }}
+        charts: ${{ inputs.helm_charts }}
+        chart_prefix: ${{ inputs.helm_chart_repo_prefix }}
     # - name: Purge old artifacts
     #   uses: kolpav/purge-artifacts-action@v1
     #   with:
