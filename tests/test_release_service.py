@@ -2,7 +2,6 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-
 from prepare_release import reject_existing_versions, release_metadata
 
 
