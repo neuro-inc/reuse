@@ -1,17 +1,19 @@
 ---
-name: Test GHCR cleanup
+name: Test automation safeguards
 on:
   push:
     branches: [master]
     paths:
     - .github/actions/cleanup-ghcr-images/**
     - .github/workflows/test-ghcr-cleanup.yml
+    - .github/workflows/release-service.yaml
     - tests/**
     - pyproject.toml
   pull_request:
     paths:
     - .github/actions/cleanup-ghcr-images/**
     - .github/workflows/test-ghcr-cleanup.yml
+    - .github/workflows/release-service.yaml
     - tests/**
     - pyproject.toml
   workflow_dispatch:
@@ -25,7 +27,9 @@ jobs:
     - uses: actions/setup-python@v6
       with:
         python-version: '3.12'
-    - name: Test cleanup safeguards
+    - name: Install test dependencies
+      run: python3 -m pip install PyYAML==6.0.2
+    - name: Test automation safeguards
       env:
         PYTHONPATH: .github/actions/cleanup-ghcr-images
       run: python3 -m unittest discover -s tests -p 'test_*.py'
