@@ -1,0 +1,33 @@
+---
+name: Prepare immutable service release
+description: Select a release version and reject existing registry artifacts.
+inputs:
+  image:
+    default: ''
+    description: Image name within ghcr.io/neuro-inc.
+  charts:
+    required: true
+    description: Chart names separated by spaces, commas, or newlines.
+  chart_prefix:
+    default: ''
+    description: Helm registry repository prefix.
+outputs:
+  tag:
+    description: Explicit Git release tag, if present.
+    value: ${{ steps.metadata.outputs.tag }}
+  version:
+    description: Selected release version.
+    value: ${{ steps.metadata.outputs.version }}
+  prerelease:
+    description: Whether this is a prerelease.
+    value: ${{ steps.metadata.outputs.prerelease }}
+runs:
+  using: composite
+  steps:
+  - id: metadata
+    shell: bash
+    env:
+      IMAGE: ${{ inputs.image }}
+      CHARTS: ${{ inputs.charts }}
+      CHART_PREFIX: ${{ inputs.chart_prefix }}
+    run: python3 "$GITHUB_ACTION_PATH/prepare_release.py"

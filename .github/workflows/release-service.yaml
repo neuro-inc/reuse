@@ -43,86 +43,15 @@ jobs:
   release:
     name: Release image and helm chart
     runs-on: ubuntu-latest
+    concurrency:
+      group: release-${{ github.repository }}-${{ github.ref }}
+      cancel-in-progress: false
     outputs:
       version: ${{ steps.meta.outputs.version }}
       prerelease: ${{ steps.meta.outputs.prerelease }}
     steps:
     - name: Checkout commit
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - uses: paulhatch/semantic-version@v5.4.0
-      id: semver
-      with:
-        version_format: ${major}.${minor}.${patch}-dev.${increment}
-    - name: Detect metadata
-      id: meta
-      run: |
-        import os
-        import re
-        import subprocess
-        import sys
-        from datetime import datetime, timedelta
-
-        def to_bool(value):
-          return "true" if value else ""
-
-        ref = "${{ github.ref }}"
-        PRE = "refs/tags/"
-        tag = ref[len(PRE):] if ref.startswith(PRE) else ""
-
-        if tag:
-          print(f"Commit has tag {tag}, checking it's format")
-
-          match = re.match(r"^v\d+\.\d+(\.\d+)?(?P<pre>-(a|b|rc|dev)\.\d*)?$", tag)
-          if not match:
-            print(
-              f"::error:: Invalid tag {tag}; ",
-              "The tag should have vYY.MM.NN[-{a|b|rc|dev}.N] format ",
-              "where YY is the current year, MM is the current month, "
-              "NN is incremental number, "
-              "every next month the number resets to 0, "
-              "a -- alpha, b -- beta, rc -- release candidate, dev -- development, N -- number.",
-            )
-            sys.exit(1)
-          else:
-            version = tag[1:]
-            is_prerelease = bool(match.group("pre"))
-        else:
-          print("Commit has not tag, generating version based on the commit history")
-
-          is_prerelease = True
-          version = "${{ steps.semver.outputs.version }}"
-          version_major = int(${{ steps.semver.outputs.major }})
-          version_minor = int(${{ steps.semver.outputs.minor }})
-
-          year = datetime.utcnow().year % 1000
-          month = datetime.utcnow().month
-
-          if (year > version_major or month > version_minor):
-            print(
-              f"Generated version {version} doesn't correspond to the current month,",
-              "checking the next version",
-            )
-
-            prev_month_last_day = datetime(year, month, 1) - timedelta(days=1)
-            prev_month_last_day = prev_month_last_day.strftime("%d.%m.%Y")
-            patch = subprocess.check_output(
-              f"git log --after '{prev_month_last_day}' --pretty='oneline' | wc -l", shell=True
-            ).decode().strip()
-            patch = int(patch) - 1
-            if patch >= 0:
-              version = f"{year}.{month}.0-dev.{patch}"
-            else:
-              print(f"No commits in the current month, probably this is a job restart, using {version}")
-
-        print("Detected version:", version)
-
-        with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-            print(f"tag={tag}", file=f)
-            print(f"version={version}", file=f)
-            print(f"prerelease={to_bool(is_prerelease)}", file=f)
-      shell: python
     - name: Install Helm
       uses: azure/setup-helm@v4
       with:
@@ -133,6 +62,13 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ github.token }}
+    - name: Prepare immutable release
+      id: meta
+      uses: neuro-inc/reuse/.github/actions/prepare-release@f147209dee68454300c6a813451c4c528af86f80
+      with:
+        image: ${{ inputs.image }}
+        charts: ${{ inputs.helm_charts }}
+        chart_prefix: ${{ inputs.helm_chart_repo_prefix }}
     # - name: Purge old artifacts
     #   uses: kolpav/purge-artifacts-action@v1
     #   with:
@@ -200,5 +136,5 @@ jobs:
         name: ${{ steps.meta.outputs.version }}
         prerelease: ${{ steps.meta.outputs.prerelease }}
         generateReleaseNotes: 'true'
-        tag: ${{ steps.semver.outputs.version_tag }}
+        tag: ${{ steps.meta.outputs.tag }}
         token: ${{ github.token }}
