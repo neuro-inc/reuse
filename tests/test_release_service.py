@@ -1,46 +1,14 @@
-import os
 import subprocess
-import tempfile
 import unittest
-from pathlib import Path
 from unittest.mock import patch
 
 
-def script(name: str) -> str:
-    workflow = (
-        Path(__file__).resolve().parents[1]
-        / ".github/workflows/release-service.yaml"
-    ).read_text()
-    step = workflow.split(f"    - name: {name}\n", 1)[1]
-    step = step.split("\n    - ", 1)[0]
-    body = step.split("      run: |\n", 1)[1]
-    lines = []
-    for line in body.splitlines():
-        if line and not line.startswith("        "):
-            break
-        lines.append(line[8:] if line else "")
-    return "\n".join(lines)
+from prepare_release import reject_existing_versions, release_metadata
 
 
 class ReleaseServiceTests(unittest.TestCase):
     def metadata(self, ref: str, run_id: str) -> dict[str, str]:
-        with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory) / "output"
-            with patch.dict(
-                os.environ,
-                {
-                    "GITHUB_REF": ref,
-                    "GITHUB_RUN_ID": run_id,
-                    "GITHUB_OUTPUT": str(output),
-                },
-            ):
-                exec(
-                    compile(script("Detect metadata"), "<metadata>", "exec"),
-                    {},
-                )
-            return dict(
-                line.split("=", 1) for line in output.read_text().splitlines()
-            )
+        return release_metadata(ref, run_id)
 
     def test_dev_versions_are_unique_per_run(self) -> None:
         first = self.metadata("refs/heads/master", "101")
@@ -60,31 +28,31 @@ class ReleaseServiceTests(unittest.TestCase):
             self.metadata("refs/tags/invalid", "101")
 
     def guard(self, replies: list[subprocess.CompletedProcess[str]]) -> None:
-        with patch.dict(
-            os.environ,
-            {
-                "VERSION": "26.10.1",
-                "IMAGE": "platformpayments",
-                "CHARTS": "platform-payments",
-                "CHART_PREFIX": "",
-            },
-        ):
-            with patch("subprocess.run", side_effect=replies) as run:
-                exec(
-                    compile(
-                        script("Reject existing release versions"),
-                        "<guard>",
-                        "exec",
-                    ),
-                    {},
-                )
-                self.assertEqual(run.call_count, 2)
+        with patch(
+            "prepare_release.subprocess.run", side_effect=replies
+        ) as run:
+            reject_existing_versions(
+                "26.10.1", "platformpayments", "platform-payments", ""
+            )
+            self.assertEqual(run.call_count, 2)
+            for call in run.call_args_list:
+                self.assertEqual(call.kwargs["timeout"], 60)
 
     def test_missing_versions_can_publish(self) -> None:
         self.guard(
             [
-                subprocess.CompletedProcess([], 1, "", "manifest unknown"),
-                subprocess.CompletedProcess([], 1, "", "not found"),
+                subprocess.CompletedProcess(
+                    [],
+                    1,
+                    "",
+                    "ERROR: ghcr.io/neuro-inc/platformpayments:26.10.1: not found",
+                ),
+                subprocess.CompletedProcess(
+                    [],
+                    1,
+                    "",
+                    "Error: ghcr.io/neuro-inc/helm-charts/platform-payments:26.10.1: not found",
+                ),
             ]
         )
 
@@ -96,7 +64,12 @@ class ReleaseServiceTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "already exists"):
             self.guard(
                 [
-                    subprocess.CompletedProcess([], 1, "", "manifest unknown"),
+                    subprocess.CompletedProcess(
+                        [],
+                        1,
+                        "",
+                        "ERROR: ghcr.io/neuro-inc/platformpayments:26.10.1: not found",
+                    ),
                     subprocess.CompletedProcess([], 0, "version: 26.10.1", ""),
                 ]
             )
@@ -112,6 +85,24 @@ class ReleaseServiceTests(unittest.TestCase):
                 self.assertRaisesRegex(RuntimeError, "Cannot verify"),
             ):
                 self.guard([subprocess.CompletedProcess([], 1, "", error)])
+
+    def test_404_in_version_does_not_hide_timeout(self) -> None:
+        response = subprocess.CompletedProcess(
+            [], 1, "", "timeout fetching example:26.10.0-dev.404123"
+        )
+        with patch("prepare_release.subprocess.run", return_value=response):
+            with self.assertRaisesRegex(RuntimeError, "Cannot verify"):
+                reject_existing_versions(
+                    "26.10.0-dev.404123", "example", "", ""
+                )
+
+    def test_lookup_timeout_stops_publication(self) -> None:
+        with patch(
+            "prepare_release.subprocess.run",
+            side_effect=subprocess.TimeoutExpired("docker", 60),
+        ):
+            with self.assertRaises(subprocess.TimeoutExpired):
+                reject_existing_versions("26.10.1", "example", "", "")
 
 
 if __name__ == "__main__":

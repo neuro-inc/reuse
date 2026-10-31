@@ -8,5 +8,5 @@ line_length = 79
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = [".github/actions/cleanup-ghcr-images", "tests"]
-mypy_path = ".github/actions/cleanup-ghcr-images"
+files = [".github/actions/cleanup-ghcr-images", ".github/actions/prepare-release", "tests"]
+mypy_path = [".github/actions/cleanup-ghcr-images", ".github/actions/prepare-release"]
