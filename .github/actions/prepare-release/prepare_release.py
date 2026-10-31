@@ -69,9 +69,13 @@ def reject_existing_versions(
             f"no such manifest: {reference}",
         }
         repository, tag = reference.rsplit(":", 1)
-        manifest_url = f"https://ghcr.io/v2/{repository.removeprefix('ghcr.io/')}/manifests/{tag}"
+        manifest_url = (
+            f"https://ghcr.io/v2/{repository.removeprefix('ghcr.io/')}/"
+            f"manifests/{tag}"
+        )
         missing.add(
-            f"error: unexpected status from head request to {manifest_url}: 404 not found"
+            "error: unexpected status from head request to "
+            f"{manifest_url}: 404 not found"
         )
         if error not in missing:
             raise RuntimeError(f"Cannot verify release absence: {reference}")

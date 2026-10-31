@@ -44,13 +44,15 @@ class ReleaseServiceTests(unittest.TestCase):
                     [],
                     1,
                     "",
-                    "ERROR: ghcr.io/neuro-inc/platformpayments:26.10.1: not found",
+                    "ERROR: ghcr.io/neuro-inc/"
+                    "platformpayments:26.10.1: not found",
                 ),
                 subprocess.CompletedProcess(
                     [],
                     1,
                     "",
-                    "Error: ghcr.io/neuro-inc/helm-charts/platform-payments:26.10.1: not found",
+                    "Error: ghcr.io/neuro-inc/helm-charts/"
+                    "platform-payments:26.10.1: not found",
                 ),
             ]
         )
@@ -67,7 +69,8 @@ class ReleaseServiceTests(unittest.TestCase):
                         [],
                         1,
                         "",
-                        "ERROR: ghcr.io/neuro-inc/platformpayments:26.10.1: not found",
+                        "ERROR: ghcr.io/neuro-inc/"
+                        "platformpayments:26.10.1: not found",
                     ),
                     subprocess.CompletedProcess([], 0, "version: 26.10.1", ""),
                 ]
