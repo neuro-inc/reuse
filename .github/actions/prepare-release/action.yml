@@ -1,3 +1,4 @@
+---
 name: Prepare immutable service release
 description: Select a release version and reject existing registry artifacts.
 inputs:
