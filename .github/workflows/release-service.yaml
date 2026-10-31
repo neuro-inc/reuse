@@ -64,7 +64,7 @@ jobs:
         password: ${{ github.token }}
     - name: Prepare immutable release
       id: meta
-      uses: neuro-inc/reuse/.github/actions/prepare-release@f1efd7bd3fb0d8064fdce75681c0e3f073378fdb
+      uses: neuro-inc/reuse/.github/actions/prepare-release@f147209dee68454300c6a813451c4c528af86f80
       with:
         image: ${{ inputs.image }}
         charts: ${{ inputs.helm_charts }}
