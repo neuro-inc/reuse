@@ -18,12 +18,14 @@ runs:
     uses: actions/setup-python@v6
     with:
       python-version: ${{ inputs.python-version }}
+      check-latest: true
       cache: pip
   - name: Setup Python (version file)
     if: ${{ inputs.python-version == '' }}
     uses: actions/setup-python@v6
     with:
       python-version-file: ${{ inputs.python-version-file || '.python-version' }}
+      check-latest: true
       cache: pip
   - name: Check Poetry pin sync
     shell: bash
@@ -41,7 +43,7 @@ runs:
     shell: bash
     run: |
       POETRY_VERSION="$(cat .poetry-version)"
-      pip install "poetry${POETRY_VERSION}"
+      python -m pip install "poetry${POETRY_VERSION}"
   - name: Setup Python dependencies cache
     uses: actions/cache@v5
     with:
@@ -49,3 +51,6 @@ runs:
       key: poetry-${{ hashFiles('**/poetry.lock') }}
       restore-keys: |
         poetry-
+  - name: Select Python for Poetry
+    shell: bash
+    run: poetry env use "$(python -c 'import sys; print(sys.executable)')"
