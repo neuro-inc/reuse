@@ -10,6 +10,10 @@ inputs:
     description: Explicit Python version
     required: false
     default: ''
+  check-latest:
+    description: Check for the latest Python version matching the requested version
+    required: false
+    default: 'true'
 runs:
   using: composite
   steps:
@@ -18,14 +22,14 @@ runs:
     uses: actions/setup-python@v6
     with:
       python-version: ${{ inputs.python-version }}
-      check-latest: true
+      check-latest: ${{ inputs.check-latest }}
       cache: pip
   - name: Setup Python (version file)
     if: ${{ inputs.python-version == '' }}
     uses: actions/setup-python@v6
     with:
       python-version-file: ${{ inputs.python-version-file || '.python-version' }}
-      check-latest: true
+      check-latest: ${{ inputs.check-latest }}
       cache: pip
   - name: Check Poetry pin sync
     shell: bash
